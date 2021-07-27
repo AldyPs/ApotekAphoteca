@@ -1,0 +1,22 @@
+from mlxtend.frequent_patterns import apriori
+from mlxtend.frequent_patterns import association_rules
+
+def apriorimethod(dataset, supp, conf):
+    barang = (dataset
+              .groupby(['No', 'Nama Barang'])['Total']
+              .sum().unstack().reset_index().fillna(0)
+              .set_index('No'))
+
+    def encode_units(item):
+        if item <= 0:
+            return 0
+        if item >= 1:
+            return 1
+
+    barang_sets = barang.applymap(encode_units)
+    frequent_itemsets = apriori(barang_sets, min_support=supp, use_colnames=True)
+
+    rules = association_rules(frequent_itemsets, metric="lift", min_threshold=0)
+    asosiasi = rules[(rules['lift'] >= 1) &
+                     (rules['confidence'] >= conf)]
+    return asosiasi
